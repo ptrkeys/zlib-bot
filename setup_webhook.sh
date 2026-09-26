@@ -5,7 +5,7 @@
 # 使用前先填好下面的值
 # ============================================================
 BOT_TOKEN="YOUR_BOT_TOKEN"
-VERCEL_URL="https://your-app.vercel.app"   # 部署后 Vercel 给你的地址
+VERCEL_URL="https://zlib-bot-delta.vercel.app"   # 部署后 Vercel 给你的地址
 
 # ============================================================
 # 执行

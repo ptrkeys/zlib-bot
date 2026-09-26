@@ -124,23 +124,29 @@ async def error_handler(update: object, ctx: ContextTypes.DEFAULT_TYPE):
 # =======================
 # Webhook 路由
 # =======================
+async def _process_update(data: dict):
+    bot_app = get_bot()
+    async with bot_app:
+        update = Update.de_json(data, bot_app.bot)
+
+        # 用户白名单检查
+        if ALLOWED_USERS:
+            uid = str(update.effective_user.id) if update.effective_user else ""
+            if uid not in ALLOWED_USERS:
+                logger.warning(f"未授权用户 {uid}")
+                return
+
+        await bot_app.process_update(update)
+
+
 @flask_app.route(f"/{BOT_TOKEN}", methods=["POST"])
-async def webhook():
+def webhook():
     """Telegram webhook 回调"""
     if not BOT_TOKEN:
         abort(500, "BOT_TOKEN not configured")
 
     data = request.get_json(force=True)
-    update = Update.de_json(data, (await get_bot()).bot)
-
-    # 用户白名单检查
-    if ALLOWED_USERS:
-        uid = str(update.effective_user.id) if update.effective_user else ""
-        if uid not in ALLOWED_USERS:
-            logger.warning(f"未授权用户 {uid}")
-            return "", 200
-
-    await (await get_bot()).process_update(update)
+    asyncio.run(_process_update(data))
     return "", 200
 
 
@@ -150,31 +156,10 @@ def index():
 
 
 # =======================
-# Vercel Serverless 入口
-# =======================
-def init_bot():
-    """Vercel 冷启动时调用，初始化 bot"""
-    import os
-    if os.environ.get("VERCEL") and BOT_TOKEN:
-        logger.info("Vercel 环境初始化 bot...")
-        import asyncio
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        loop.run_until_complete(get_bot().initialize())
-
-
-def handler(event, context):
-    """Vercel serverless handler"""
-    return flask_app(event, context)
-
-
-# =======================
 # 本地开发测试
 # =======================
 def run_local():
     """本地运行（轮询模式）"""
-    from telegram.ext import ApplicationBuilder
-    import logging
     logging.basicConfig(level=logging.INFO)
 
     print(f"BOT_TOKEN: {'*' * len(BOT_TOKEN) if BOT_TOKEN else 'NOT SET'}")

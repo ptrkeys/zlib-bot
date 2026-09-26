@@ -9,17 +9,10 @@ import sys
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
 
-from api_app import flask_app, init_bot, BOT_TOKEN, get_bot, ALLOWED_USERS
+from api_app import flask_app
 
-# 冷启动初始化
-if not os.environ.get("_VERCEL_WARMED"):
-    os.environ["_VERCEL_WARMED"] = "1"
-    # 初始化 bot（在 Vercel 冷启动时做一次）
-    if BOT_TOKEN:
-        import asyncio
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        loop.run_until_complete(get_bot().initialize())
-
-# Vercel's Python runtime auto-detects a top-level WSGI app named `app`
+# Vercel's Python runtime auto-detects a top-level WSGI app named `app`.
+# The bot Application is initialized/shut down per-request inside the
+# webhook view instead of once at cold start, since each invocation may
+# run on a different event loop.
 app = flask_app
