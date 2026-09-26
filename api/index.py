@@ -21,7 +21,5 @@ if not os.environ.get("_VERCEL_WARMED"):
         asyncio.set_event_loop(loop)
         loop.run_until_complete(get_bot().initialize())
 
-
-def handler(event, context):
-    """Vercel serverless handler — 每个请求都会调用这里"""
-    return flask_app(event, context)
+# Vercel's Python runtime auto-detects a top-level WSGI app named `app`
+app = flask_app
